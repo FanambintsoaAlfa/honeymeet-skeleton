@@ -1,27 +1,34 @@
-import { auth } from "@/lib/auth"
+import NextAuth from "next-auth"
 import { NextResponse } from "next/server"
+import { authConfig } from "@/lib/auth.config"
+
+// Le middleware tourne sur le runtime Edge : on utilise uniquement la config
+// légère (sans Prisma). La vérification du JWT suffit pour protéger les pages.
+const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
+  const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/register")
-  const isProtected =
-    req.nextUrl.pathname.startsWith("/dashboard") ||
-    req.nextUrl.pathname.startsWith("/profile") ||
-    req.nextUrl.pathname.startsWith("/search") ||
-    req.nextUrl.pathname.startsWith("/matches") ||
-    req.nextUrl.pathname.startsWith("/messages") ||
-    req.nextUrl.pathname.startsWith("/subscription")
+  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register")
 
-  if (isProtected && !isLoggedIn) {
+  if (!isLoggedIn && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", req.nextUrl))
   }
-  if (isAuthPage && isLoggedIn) {
+  if (isLoggedIn && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl))
   }
   return NextResponse.next()
 })
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile/:path*", "/search/:path*", "/matches/:path*", "/messages/:path*", "/subscription/:path*", "/login", "/register"],
+  matcher: [
+    "/dashboard/:path*",
+    "/profile/:path*",
+    "/search/:path*",
+    "/matches/:path*",
+    "/messages/:path*",
+    "/subscription/:path*",
+    "/login",
+    "/register",
+  ],
 }
-
