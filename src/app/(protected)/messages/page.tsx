@@ -233,7 +233,7 @@ export default function MessagesPage() {
                   <h2 className="font-bold text-gray-800">
                     {selected.user.profile?.firstName || "Utilisateur"}
                   </h2>
-                  <p className="text-xs text-green-600">Disponible</p>
+                  <p className="text-xs text-gray-500">Conversation</p>
                 </div>
               </div>
 
