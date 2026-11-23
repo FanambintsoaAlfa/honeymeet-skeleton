@@ -8,31 +8,34 @@
 }
 
 html {
-  background: var(--background);
+  min-height: 100%;
+  background-color: var(--background);
 }
 
 body {
+  position: relative;
+  isolation: isolate;
   color: var(--foreground);
   background: transparent;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
 }
 
-/*
-  Image d'arrière-plan (abeille Cupidon) sur TOUTES les pages.
-  - position: fixed + z-index négatif : fonctionne aussi sur mobile
-    (background-attachment: fixed est ignoré sur iOS/Android).
-  - Le voile blanc garde le texte lisible.
-*/
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
+  pointer-events: none;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)),
     url("/images/abeille-cupidon.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }

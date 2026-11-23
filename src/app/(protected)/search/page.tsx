@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { getProfilePhoto } from "@/lib/avatar"
 
 interface Profile {
   id: string
@@ -23,44 +24,63 @@ export default function DiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
 
   useEffect(() => {
     fetch("/api/discover")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("load")
+        return res.json()
+      })
       .then((data) => {
         setProfiles(data.profiles || [])
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => {
+        setError("Impossible de charger les profils.")
+        setLoading(false)
+      })
   }, [])
 
   async function handleLike(type: "LIKE" | "DISLIKE") {
     const current = profiles[currentIndex]
     if (!current) return
 
-    const res = await fetch("/api/like", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        toUserId: current.user.id,
-        type,
-      }),
-    })
+    setError("")
+    setMessage("")
 
-    const data = await res.json()
+    try {
+      const res = await fetch("/api/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toUserId: current.user.id,
+          type,
+        }),
+      })
 
-    if (data.isMatch) {
-      setMessage("C'est un Match 🎉")
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        setError(data.error || "Action impossible, réessayez.")
+        return
+      }
+
+      if (data.isMatch) {
+        setMessage("C'est un Match 🎉")
+      }
+
+      // Passer au profil suivant
+      setCurrentIndex((prev) => prev + 1)
+    } catch {
+      setError("Erreur de connexion. Réessayez.")
     }
-
-    // Passer au profil suivant
-    setCurrentIndex((prev) => prev + 1)
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p>Chargement des profils...</p>
+        <p className="rounded-lg bg-white/90 px-4 py-2">Chargement des profils...</p>
       </div>
     )
   }
@@ -70,7 +90,9 @@ export default function DiscoverPage() {
   if (!current) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-xl">Plus de profils pour le moment</p>
+        <p className="rounded-lg bg-white/90 px-4 py-2 text-xl">
+          {error || "Plus de profils pour le moment"}
+        </p>
         <Button onClick={() => window.location.reload()}>Actualiser</Button>
       </div>
     )
@@ -78,7 +100,13 @@ export default function DiscoverPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
-      <h1 className="text-2xl font-bold mb-6 text-center">Découvrir</h1>
+      <h1 className="mb-6 rounded-lg bg-white/80 px-3 py-2 text-center text-2xl font-bold backdrop-blur-sm">Découvrir</h1>
+
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-100 p-3 text-center text-red-700">
+          {error}
+        </div>
+      )}
 
       {message && (
         <div className="mb-4 p-3 bg-rose-100 text-rose-700 rounded-lg text-center">
@@ -86,18 +114,15 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <div className="bg-white/95 rounded-2xl border shadow-sm overflow-hidden">
         {/* Photo */}
         <div className="h-80 bg-rose-50 flex items-center justify-center">
-          {current.mainPhoto ? (
-            <img
-              src={current.mainPhoto}
-              alt={current.firstName || "Photo"}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-8xl">👤</span>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={getProfilePhoto(current)}
+            alt={current.firstName || "Photo"}
+            className="w-full h-full object-cover"
+          />
         </div>
 
         {/* Infos */}
@@ -137,6 +162,14 @@ export default function DiscoverPage() {
           >
             ♥
           </Button>
+        </div>
+        <div className="px-5 pb-5">
+          <a
+            href={`/api/profiles/${current.id}/download`}
+            className="inline-flex h-10 w-full items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-4 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
+          >
+            Télécharger la fiche
+          </a>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer className="border-t bg-white py-8 mt-auto">
+    <footer className="mt-auto border-t bg-white/90 py-8 backdrop-blur-md">
       <div className="container mx-auto px-4 text-center text-sm text-gray-500">
         <p className="mb-2">
           © {new Date().getFullYear()} HoneyMeet – Honey Group

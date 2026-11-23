@@ -18,9 +18,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate Prisma Client
         run: npx prisma generate
@@ -28,6 +29,5 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          NEXTAUTH_URL: "http://localhost:3000"
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost:5432/honeymeet' }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'ci-only-secret-not-for-deployment' }}

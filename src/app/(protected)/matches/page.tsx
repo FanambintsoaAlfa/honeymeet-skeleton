@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { getProfilePhoto } from "@/lib/avatar"
 
 export default async function MatchesPage() {
   const session = await auth()
@@ -27,10 +28,10 @@ export default async function MatchesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Mes Matchs</h1>
+      <h1 className="mb-6 inline-block rounded-lg bg-white/80 px-3 py-2 text-2xl font-bold backdrop-blur-sm">Mes Matchs</h1>
 
       {matches.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
+        <div className="rounded-xl bg-white/90 py-16 text-center text-gray-600">
           <p className="text-lg">Aucun match pour le moment</p>
           <p className="text-sm mt-2">Continue de liker des profils !</p>
         </div>
@@ -45,18 +46,15 @@ export default async function MatchesPage() {
               <Link
                 key={match.id}
                 href={`/messages/${match.id}`}
-                className="flex items-center gap-4 p-4 bg-white border rounded-xl hover:bg-gray-50 transition"
+                className="flex items-center gap-4 p-4 bg-white/95 border rounded-xl hover:bg-gray-50 transition"
               >
                 <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center overflow-hidden">
-                  {profile?.mainPhoto ? (
-                    <img
-                      src={profile.mainPhoto}
-                      alt={profile.firstName || ""}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl">👤</span>
-                  )}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getProfilePhoto(profile)}
+                    alt={profile?.firstName || ""}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
                 <div className="flex-1">

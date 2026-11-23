@@ -29,7 +29,7 @@ ACCESS & LOAD BALANCER (AWS)
         │
         ▼
 SYSTEM BACKEND
-├── Auth & Security (Auth0 + JWT)
+├── Auth & Security (Auth.js Credentials + JWT)
 ├── User Profile Management
 ├── Matching Engine (Algorithms + Geolocation + Filters)
 ├── Communications (Chat + Messaging + Notifications) → Jitsi
@@ -45,7 +45,7 @@ PAYMENT & SUBSCRIPTION MODULE
 DATA LAYER
 ├── Main DB          → PostgreSQL (Profiles, Matches...)
 ├── Cache            → Redis
-├── Object Storage   → AWS S3 (Photos, Videos)
+├── Object Storage   → Cloudinary (Photos)
 └── Analytics & Reporting
 ```
 
@@ -59,7 +59,7 @@ Tables principales (selon spécifications Honey Group) :
 |--------------------------|------------------------------------------|
 | `users`                  | Comptes utilisateurs (International / Local) |
 | `profiles`               | Profils membres + géolocalisation + is_premium |
-| `photos_videos`          | Médias stockés sur AWS S3                |
+| `photos_videos`          | URLs des médias stockés sur Cloudinary   |
 | `matches_interactions`   | Likes, Dislikes, SuperLikes, Matchs      |
 | `subscriptions`          | Abonnements (Mensuel, Trimestriel, Pass) |
 | `transactions_payments`  | Historique des paiements (Stripe + Mobile Money) |
@@ -80,9 +80,9 @@ Tables principales (selon spécifications Honey Group) :
 | Langage             | TypeScript                      |
 | Styling             | Tailwind CSS                    |
 | Base de données     | PostgreSQL + Prisma             |
-| Auth (prévu)        | Auth0 / JWT                     |
+| Auth                | Auth.js (Credentials + JWT)     |
 | Paiements           | Stripe + Mobile Money           |
-| Stockage médias     | AWS S3                          |
+| Stockage médias     | Cloudinary                      |
 | Chat (prévu)        | Jitsi / temps réel              |
 | Cache               | Redis                           |
 | Déploiement         | Vercel + AWS                    |
@@ -132,7 +132,7 @@ npm install
 
 # 2. Configurer la base de données
 cp .env.example .env
-# → Remplir DATABASE_URL avec votre PostgreSQL
+# → Renseigner DATABASE_URL, AUTH_SECRET et les clés Cloudinary
 
 # 3. Générer le client Prisma
 npx prisma generate
@@ -150,8 +150,8 @@ Ouvrir [http://localhost:3000](http://localhost:3000)
 
 ## 📋 Prochaines étapes (après validation du Skeleton)
 
-1. Authentification complète (Auth0 ou NextAuth + JWT)
-2. CRUD Profils + Upload photos (AWS S3)
+1. Ajouter d’autres fournisseurs d’authentification si nécessaire (Auth.js Credentials + JWT actuellement)
+2. CRUD Profils + Upload photos (Cloudinary)
 3. Matching Engine (filtres + score de compatibilité)
 4. Système de Likes / Matchs
 5. Messagerie temps réel

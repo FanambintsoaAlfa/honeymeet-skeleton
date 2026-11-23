@@ -27,6 +27,13 @@ model User {
   messagesSent  Message[] @relation("messagesSent")
   photos        Photo[]
   transactions  Transaction[]
+  messageReactions MessageReaction[]
+  profileReactions ProfileReaction[]
+  profileDownloads ProfileDownload[]
+  favorites      UserFavorite[]
+  profileViews   ProfileView[]
+  privacy        ProfilePrivacySettings?
+  subscriptions  PremiumSubscription[]
 }
 
 model Profile {
@@ -47,6 +54,10 @@ model Profile {
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  reactions     ProfileReaction[]
+  downloads     ProfileDownload[]
+  favorites     UserFavorite[]
+  views         ProfileView[]
 }
 
 model Photo {
@@ -95,6 +106,99 @@ model Message {
 
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   sender    User     @relation("messagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  reactions MessageReaction[]
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+model ProfileReaction {
+  id        String   @id @default(cuid())
+  profileId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, userId, emoji])
+  @@index([profileId])
+}
+
+model ProfileDownload {
+  id        String   @id @default(cuid())
+  userId    String
+  profileId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model UserFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  profileId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, profileId])
+  @@index([profileId])
+}
+
+model ProfileView {
+  id        String   @id @default(cuid())
+  profileId String
+  viewerId  String?
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  viewer  User?   @relation(fields: [viewerId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, createdAt])
+}
+
+model ProfilePrivacySettings {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  showLocation   Boolean @default(true)
+  showBirthDate  Boolean @default(false)
+  showInterests  Boolean @default(true)
+  showPhotos     Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PremiumSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  level     String   @default("PREMIUM")
+  status    String   @default("PENDING")
+  provider  String
+  startsAt  DateTime @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, expiresAt])
 }
 
 model Transaction {

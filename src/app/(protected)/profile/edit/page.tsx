@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 export default function EditProfilePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -19,7 +20,10 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     fetch("/api/profile")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("load")
+        return res.json()
+      })
       .then((data) => {
         if (data.profile) {
           setForm({
@@ -33,32 +37,42 @@ export default function EditProfilePage() {
           })
         }
       })
+      .catch(() => setError("Impossible de charger votre profil."))
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setError("")
 
-    const res = await fetch("/api/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    })
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      })
 
-    if (res.ok) {
-      router.push("/profile")
-      router.refresh()
-    } else {
-      alert("Erreur lors de la mise à jour")
-      setLoading(false)
+      if (res.ok) {
+        router.push("/profile")
+        router.refresh()
+        return
+      }
+
+      const data = await res.json().catch(() => ({}))
+      setError(data.error || "Erreur lors de la mise à jour")
+    } catch {
+      setError("Erreur de connexion. Réessayez.")
     }
+    setLoading(false)
   }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Modifier mon profil</h1>
+      <h1 className="mb-6 inline-block rounded-lg bg-white/80 px-3 py-2 text-2xl font-bold backdrop-blur-sm">
+        Modifier mon profil
+      </h1>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white/90 backdrop-blur-sm rounded-xl border p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Prénom</label>
@@ -137,6 +151,8 @@ export default function EditProfilePage() {
             placeholder="Parlez un peu de vous..."
           />
         </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div className="flex gap-3 pt-4">
           <Button type="submit" disabled={loading}>

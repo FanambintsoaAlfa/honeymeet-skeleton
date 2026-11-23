@@ -10,6 +10,7 @@ interface Message {
   content: string
   senderId: string
   createdAt: string
+  reactions?: Array<{ emoji: string; userId: string }>
   sender: {
     id: string
     profile: {
@@ -20,6 +21,7 @@ interface Message {
 }
 
 const emojis = ["😀", "😂", "🥰", "😍", "😘", "😊", "😉", "😎", "🥹", "😢", "😮", "👍", "👏", "🙌", "🎉", "❤️", "💕", "🔥", "✨", "🍯"]
+const reactionEmojis = ["❤️", "😂", "😍", "😘", "🔥", "👍", "😢"]
 
 export default function ChatPage() {
   const params = useParams()
@@ -31,6 +33,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showEmojis, setShowEmojis] = useState(false)
+  const [reactionMessageId, setReactionMessageId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const loadMessages = useCallback(async () => {
@@ -89,6 +92,24 @@ export default function ChatPage() {
     }
   }
 
+  async function reactToMessage(messageId: string, emoji: string) {
+    try {
+      const res = await fetch("/api/messages/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId, emoji }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || "Réaction impossible")
+        return
+      }
+      await loadMessages()
+    } catch {
+      setError("Erreur de connexion")
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8 text-center">
@@ -135,6 +156,52 @@ export default function ChatPage() {
                 <p className={`mt-1 text-right text-xs ${mine ? "text-white/70" : "text-gray-400"}`}>
                   {new Date(msg.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                 </p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {reactionEmojis.map((emoji) => {
+                    const count = msg.reactions?.filter((reaction) => reaction.emoji === emoji).length || 0
+                    if (!count) return null
+                    return (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => reactToMessage(msg.id, emoji)}
+                        className={`rounded-full px-2 py-0.5 text-xs ${mine ? "bg-white/20" : "bg-pink-50"}`}
+                        title="Ajouter ou retirer cette réaction"
+                      >
+                        {emoji} {count}
+                      </button>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReactionMessageId((current) => current === msg.id ? null : msg.id)
+                    }
+                    className={`rounded-full px-2 py-0.5 text-xs ${mine ? "bg-white/20" : "bg-pink-50"}`}
+                    aria-label="Réagir au message"
+                    aria-expanded={reactionMessageId === msg.id}
+                  >
+                    ＋
+                  </button>
+                </div>
+                {reactionMessageId === msg.id && (
+                  <div className="mt-2 flex gap-1 rounded-xl bg-white/80 p-1 shadow-sm" role="group" aria-label="Choisir une réaction">
+                    {reactionEmojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => {
+                          setReactionMessageId(null)
+                          void reactToMessage(msg.id, emoji)
+                        }}
+                        className="rounded-lg p-1 text-lg transition-transform hover:scale-125 hover:bg-pink-50"
+                        aria-label={`Réagir avec ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )

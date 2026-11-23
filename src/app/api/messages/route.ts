@@ -34,6 +34,9 @@ export async function GET(req: Request) {
       where: { matchId },
       orderBy: { createdAt: "asc" },
       include: {
+        reactions: {
+          select: { emoji: true, userId: true },
+        },
         sender: {
           select: {
             id: true,
